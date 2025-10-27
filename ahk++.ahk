@@ -1,5 +1,4 @@
-﻿
-#Include <Print>
+﻿#Include <Print>
 #SingleInstance force
 
 commentRegExp := '(^|\s+);.*'  ;注释的正则表达式
@@ -479,12 +478,6 @@ replaceAll(text,search,replace)
  * 核心数据结构：用数组记录层级，`-1` 作为代码块分隔符（对应 `{}`），数字表示缩进深度
  * 作用：解决嵌套控制流的缩进回溯问题（如多层 if-else 后正确恢复缩进）
  */
-; 【控制流嵌套深度管理器】
-; 跟踪 if/loop/while 等控制流语句的缩进层级，处理嵌套代码块的缩进计算
-; 核心数据结构：用数组记录层级，`-1` 作为代码块分隔符（对应 `{}`），数字表示缩进深度
-; 作用：解决嵌套控制流的缩进回溯问题（如多层 if-else 后正确恢复缩进）
-; 【控制流嵌套深度管理器】
-; 【控制流嵌套深度管理器】
 class FlowOfControlNestDepth {
     ; 层级数组：
     ; - 元素为 `-1`：代码块分隔符（标记 `{` 的位置）
@@ -796,7 +789,7 @@ internalFormat(stringToFormat, options)
     local switchCaseDefault := "^(case\s*.+?:|default:)\s*.*"
     ; 注释提取正则：匹配行中第一个 ; 及其后的所有内容
     ; local commentRegExp := /;.*/
-
+lines :=FormatAllmanStyle(stringToFormat)
     ; ==============================
     ; 初始化：按行拆分文档（支持 \n/\r\n/\r 换行符）
     ; ==============================
@@ -808,8 +801,8 @@ internalFormat(stringToFormat, options)
     {
         lineIndex:=A_Index
         local purifiedLine := StrLower(purify(originalLine))  ; 净化行（去注释/字符串，转小写）
-        local comment := ""  ; 提取行尾注释
-        
+        local comment := ""  
+        ; 提取行尾注释
         if (RegExMatch(originalLine, commentRegExp, &matchObj))
         {
             comment := matchObj[1]
@@ -886,7 +879,6 @@ internalFormat(stringToFormat, options)
         ; --------------------------
         if (!blockComment && RegExMatch(originalLine, "^\s*\/\*"))
         {
-            print("块注释开始处理")
             blockComment := true
             ; 提取块注释的基础缩进（行首空格 + /* 前的空格）
             if (RegExMatch(originalLine, "(^\s*)\/\*", &matchObj))
@@ -916,7 +908,6 @@ internalFormat(stringToFormat, options)
         ; --------------------------
         if (blockComment)
         {
-            print("块注释处理")
             ; 不格式化块注释：保留用户原始缩进（仅移除基础缩进避免重复）
             if (!formatBlockComment)
             {
@@ -961,7 +952,6 @@ internalFormat(stringToFormat, options)
         ; --------------------------
         if (emptyLine && !RegExMatch(comment, ahkAlignAssignmentOn) && !RegExMatch(comment, ahkAlignAssignmentOff) && !RegExMatch(comment, ahkFormatBlockCommentOn) && !RegExMatch(comment, ahkFormatBlockCommentOff))
         {
-            print("单行注释处理")
             ; 纯注释行：按当前深度输出（后续 alignSingleLineComments 会进一步对齐）
             formattedString .= buildIndentedLine(lineIndex, lines.length, formattedLine, 0, options)
             continue
@@ -971,7 +961,6 @@ internalFormat(stringToFormat, options)
         ; 6. 原始文本续行开始
         ; --------------------------
         if (RegExMatch(purifiedLine, "^ \( (?!::) (?!.*\bltrim\b) ",)) {
-            print("原始文本续行开始")
             continuationSectionTextNotFormat := true
         }
         ; 原始文本续行内容（保留用户格式）
@@ -1333,16 +1322,56 @@ internalFormat(stringToFormat, options)
     return formattedString
 }
 
+FormatAllmanStyle(originalCode)
+{
+	code := RegExReplace(originalCode, "(\s*)(.*?)(\{)", "$1$2`n{")
 
+	code := RegExReplace(code, "(\{)\s*(.*?)", "$1`n$2")
+	code := RegExReplace(code, "(\})\s*(.*?)", "$1`n$2")
+	code := RegExReplace(code, "(\s*)(.*?)(\})", "$1$2`n}")
+	; 3. 移除大括号前后多余的空行（保持整洁）
+	code := RegExReplace(code, "`n{1,}(?=\{)", "`n")  ; 左大括号前最多一个空行
+	code := RegExReplace(code, "(\})\s*`n{2,}", "$1`n`n")  ; 右大括号后保留一个空行
+
+	; 4. 修复可能的缩进问题（确保左大括号与前语句对齐）
+	code := RegExReplace(code, "(\n[ \t]*)\{([ \t]*\n)", "$1{$2$1")
+	code := TrimBracesEmptyLines(code)
+	return code
+}
+; 移除大括号前后的多余空行（保留最多一个空行）
+TrimBracesEmptyLines(code) {
+	; 1. 处理左大括号 { 前的多余空行
+	; 匹配 { 前的连续空行，保留最多一个
+	code := RegExReplace(code, "(\r?\n){2,}(\s*\{)", "`n$2")
+
+	; 2. 处理左大括号 { 后的多余空行
+	; 匹配 { 后的连续空行，保留最多一个
+	code := RegExReplace(code, "(\{)(\s*)(\r?\n){2,}", "$1$2`n")
+
+	; 3. 处理右大括号 } 前的多余空行
+	; 匹配 } 前的连续空行，保留最多一个
+	code := RegExReplace(code, "(\r?\n){2,}(\s*\})", "`n$2")
+
+	; 4. 处理右大括号 } 后的多余空行
+	; 匹配 } 后的连续空行，保留最多一个（可根据需求调整为保留两个）
+	code := RegExReplace(code, "(\})(\s*)(\r?\n){2,}", "$1$2`n`n")
+
+	return code
+}
 text:=
 (
-"if (true) {
+"if    (true)
+{
 return
-} else
-{return
-}
-ExitApp"
+ if    (true)
+{
+return
+    
+}   
+} else {
+dfaf()}
+"
 )
 
-text:=internalFormat(text,options2)
+text:=(internalFormat(text,options2))
 Print(text)
