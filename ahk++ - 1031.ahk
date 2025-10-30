@@ -11,7 +11,7 @@ options2 := {
    indentCodeAfterLabel: 1,  ;允许的最大连续空行数量（-1 表示不限制）
    indentCodeAfterIfDirective: 1,  ;允许的最大连续空行数量（-1 表示不限制）
    trimExtraSpaces:true,   ;是否清理多余空格（用户配置）
-   switchCaseAlignment:false 
+   switchCaseAlignment:true 
 }
 ; =================================================================
 ; 函数定义: repeat
@@ -24,7 +24,7 @@ options2 := {
 ; =================================================================
 repeat(TextToRepeat, RepeatCount)
 {
-    ; 1. 初始化一个空字符串，用于存放最终结果
+; 1. 初始化一个空字符串，用于存放最终结果
     finalString := ""
 
     if (RepeatCount <= 0)
@@ -765,6 +765,11 @@ internalFormat(stringToFormat, options)
     local sharpDirective := '#(ifwinactive|ifwinnotactive|ifwinexist|ifwinnotexist|if)'
     ; Switch 的 Case/Default 匹配（如 case 1:、default:）
     local switchCaseDefault := "^(case\s*.+?:|default:)\s*.*"
+    ;是否进入Switch语句
+    local switchflag := false 
+    ;是否Switch的第一个 Case语句
+    local switchcaseflag:= false
+    
     ; 注释提取正则：匹配行中第一个 ; 及其后的所有内容
     ; local commentRegExp := /;.*/
 
@@ -1034,9 +1039,10 @@ internalFormat(stringToFormat, options)
             {
                 depth -= closeBraceNum
             }
-            if(!switchCaseAlignment)
+            if(switchflag)
             {
                 depth--
+                switchflag:=false
             }
         }
 
@@ -1064,7 +1070,6 @@ internalFormat(stringToFormat, options)
                 }
             }
         }
-
         ; --------------------------
         ; 12. 控制流处理：退出嵌套（非续行、非单行控制流，回溯缩进）
         ; --------------------------
@@ -1077,17 +1082,19 @@ internalFormat(stringToFormat, options)
             }
             else if (!RegExMatch(purifiedLine, "^{") && !RegExMatch(purifiedLine, "^}"))
             {
+
                 local restoreIfDepth := ifDepth.restoreDepth()
                 local restoreFocDepth := focDepth.restoreDepth()
                 ; 处理深度值存在的情况，取最小值
-                if (IsSet(restoreIfDepth) && IsSet(restoreFocDepth))
+								;原语句if (restoreIfDepth !== undefined &&restoreFocDepth !== undefined)
+                if (restoreIfDepth!=0 && restoreFocDepth!=0)
                 {
                     ;depth := Min(Number(restoreIfDepth), Number(restoreFocDepth))
                     depth := (restoreIfDepth < restoreFocDepth) ? restoreIfDepth : restoreFocDepth
                 }
                 else
                 {
-                    depth := IsSet(restoreIfDepth) ? restoreIfDepth : restoreFocDepth
+                    depth := restoreIfDepth!=0 ? restoreIfDepth : restoreFocDepth
                 }
             }
         }
@@ -1122,13 +1129,14 @@ internalFormat(stringToFormat, options)
         ; --------------------------
        if (RegExMatch(purifiedLine, "\bswitch\b"))
         {
-            switchCaseAlignment:=true
+            switchflag:=true
+            switchcaseflag:=true
         }
         if (RegExMatch(purifiedLine, switchCaseDefault))
         {
-            if(switchCaseAlignment)
+            if(switchcaseflag)
             {
-                switchCaseAlignment:=false
+                switchcaseflag:=false
             }
             else
             {
@@ -1144,7 +1152,8 @@ internalFormat(stringToFormat, options)
                 depth--
             }
         }
-
+; Print(depth)
+; Print(ifDepth)
         ; --------------------------
         ; 16. 边界处理：确保深度非负（避免异常缩进）
         ; --------------------------
@@ -1347,7 +1356,8 @@ FormatAllmanStyle(strInput)
         
         if (currentChar = "{" || currentChar = "}") 
 				{
-            output .= "`n" currentChar "`n"
+
+						output .= "`n" currentChar "`n"
         } 
 				else 
 				{
