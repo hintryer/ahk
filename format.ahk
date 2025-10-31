@@ -771,7 +771,7 @@ internalFormat(stringToFormat, options)
     local switchcaseflag:= false
     
     ; 注释提取正则：匹配行中第一个 ; 及其后的所有内容
-    ; local commentRegExp := /;.*/
+     local commentRegExp := "(;.*)"
 
     
     stringToFormat :=FormatAllmanStyle(stringToFormat)
@@ -1413,3 +1413,6 @@ format()
 		
 }
 format()
+
+;text:=(internalFormat(A_Clipboard,options2))
+;Print(text)
