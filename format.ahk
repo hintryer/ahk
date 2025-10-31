@@ -1,7 +1,7 @@
 ﻿#Include <Print>
 #SingleInstance force
 
-commentRegExp := '(^|\s+);.*'  ;注释的正则表达式
+commentRegExp := '(^|\s+)\;.*'  ;注释的正则表达式
 
 options2 := {
    insertSpaces: true,  ; 是否用空格
@@ -748,10 +748,10 @@ internalFormat(stringToFormat, options)
     ; 7. 正则表达式（复用避免重复创建，使用 AHK 原生 RegEx 对象）
     ; ==============================
     ; 赋值对齐指令：;@AHK++AlignAssignmentOn/Off
-    local ahkAlignAssignmentOn := true
+    local ahkAlignAssignmentOn := false
     local ahkAlignAssignmentOff := true
     ; 块注释格式化指令：;@AHK++FormatBlockCommentOn/Off
-    local ahkFormatBlockCommentOn := true
+    local ahkFormatBlockCommentOn := false
     local ahkFormatBlockCommentOff := true
     ; 续行匹配：以 and/or/not/运算符/逗号等开头的行（需与上一行合并）
     local continuationSection := "^(((and|or|not)\b)|[\^!~?:&<>=.,|]|\+(?!\+)|-(?!-)|\/(?!\*)|\*(?!\/))"
@@ -771,14 +771,14 @@ internalFormat(stringToFormat, options)
     local switchcaseflag:= false
     
     ; 注释提取正则：匹配行中第一个 ; 及其后的所有内容
-     local commentRegExp := "(;.*)"
+     ;local commentRegExp := "(;.*)"
 
     
     stringToFormat :=FormatAllmanStyle(stringToFormat)
     ; ==============================
     ; 初始化：按行拆分文档（支持 \n/\r\n/\r 换行符）
     ; ==============================
-    local lines := StrSplit(stringToFormat, "`n")  ; AHK v2 StrSplit 支持 \R 匹配所有换行符
+    local lines := StrSplit(stringToFormat, "`r`n")  ; AHK v2 StrSplit 支持 \R 匹配所有换行符
     ; ==============================
     ; 核心流程：逐行处理每一行
     ; ==============================
@@ -790,13 +790,15 @@ internalFormat(stringToFormat, options)
         ; 提取行尾注释
         if (RegExMatch(originalLine, commentRegExp, &matchObj))
         {
-            comment := matchObj[1]
+            comment := matchObj[0]
         }
-
         ; 移除注释 → 清理多余空格 → 恢复注释 → 修剪行首尾空格
-        local formattedLine := RegExReplace(originalLine, comment, "")  ; 移除注释
+        local formattedLine := StrReplace(originalLine, comment, "")  ; 移除注释
+
         formattedLine := trimExtraSpaces(formattedLine, trimSpaces)   ; 清理多余空格
+
         formattedLine := formattedLine . comment                      ; 恢复注释
+
         formattedLine := Trim(formattedLine)                          ; 修剪行首尾空格
         ; 判断是否为空行/纯注释行（净化后无代码内容）
         local emptyLine := (purifiedLine == "")
@@ -1414,5 +1416,5 @@ format()
 }
 format()
 
-;text:=(internalFormat(A_Clipboard,options2))
-;Print(text)
+; text:=(internalFormat(A_Clipboard,options2))
+; Print(text)
