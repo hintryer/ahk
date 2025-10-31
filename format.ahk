@@ -3,15 +3,16 @@
 
 commentRegExp := '(^|\s+)\;.*'  ;注释的正则表达式
 
-options2 := {
-   insertSpaces: true,  ; 是否用空格
-   tabSize: 4,       ; 空格缩进时的字符数
-   preserveIndent: false, ; 空行也保留缩进
-   allowedNumberOfEmptyLines: 1,  ;允许的最大连续空行数量（-1 表示不限制）
-   indentCodeAfterLabel: 1,  ;允许的最大连续空行数量（-1 表示不限制）
-   indentCodeAfterIfDirective: 1,  ;允许的最大连续空行数量（-1 表示不限制）
-   trimExtraSpaces:true,   ;是否清理多余空格（用户配置）
-   switchCaseAlignment:true 
+options2 :=
+{
+    insertSpaces: true,  ; 是否用空格
+    tabSize: 4,       ; 空格缩进时的字符数
+    preserveIndent: false, ; 空行也保留缩进
+    allowedNumberOfEmptyLines: 1,  ;允许的最大连续空行数量（-1 表示不限制）
+    indentCodeAfterLabel: 1,  ;允许的最大连续空行数量（-1 表示不限制）
+    indentCodeAfterIfDirective: 1,  ;允许的最大连续空行数量（-1 表示不限制）
+    trimExtraSpaces:true,   ;是否清理多余空格（用户配置）
+    switchCaseAlignment:true
 }
 ; =================================================================
 ; 函数定义: repeat
@@ -24,14 +25,13 @@ options2 := {
 ; =================================================================
 repeat(TextToRepeat, RepeatCount)
 {
-; 1. 初始化一个空字符串，用于存放最终结果
+    ; 1. 初始化一个空字符串，用于存放最终结果
     finalString := ""
 
     if (RepeatCount <= 0)
     {
         return finalString
     }
-    
     ; 3. 循环 RepeatCount 次
     Loop RepeatCount
     {
@@ -39,7 +39,6 @@ repeat(TextToRepeat, RepeatCount)
     }
     return finalString
 }
-
 ; 功能: 将数组元素用指定分隔符连接成字符串。
 StrJoin(array, delimiter)
 {
@@ -50,7 +49,6 @@ StrJoin(array, delimiter)
     }
     return str
 }
-
 /**
  * 生成指定深度的缩进字符
  * 根据 VS Code 用户配置（空格/制表符缩进）生成对应格式的缩进
@@ -74,7 +72,7 @@ buildIndentationChars(depth,options)
 
 buildIndentedString(indentationChars,formattedLine,preserveIndentOnEmptyString)
 {
-    if (preserveIndentOnEmptyString) 
+    if (preserveIndentOnEmptyString)
     {
         ;保留空行缩进：即使行文本为空，也添加缩进
         return indentationChars . formattedLine
@@ -96,14 +94,14 @@ buildIndentedLine(lineIndex, lastLineIndex, formattedLine, depth, options)
 {
     ; 1. 生成当前深度的缩进字符
     indentationChars := buildIndentationChars(depth, options)
-     ; 2. 生成带缩进的行文本（无换行符）
+    ; 2. 生成带缩进的行文本（无换行符）
     indentedLine := buildIndentedString(indentationChars, formattedLine, options.preserveIndent)
     ; 3. 非最后一行添加换行符（避免文档末尾多余空行）
-     if (lineIndex != lastLineIndex) {
+    if (lineIndex != lastLineIndex)
+    {
         ; AHK 中使用 "`n" 作为换行符
         indentedLine .= "`n"
     }
-    
     return indentedLine
 }
 /**
@@ -112,24 +110,25 @@ buildIndentedLine(lineIndex, lastLineIndex, formattedLine, depth, options)
  * @param line 待检查的行文本
  * @returns 右括号数量 > 左括号数量时返回 true，否则 false
  */
- 
+
 hasMoreCloseParens(line)
 {
     openCount := 0, closeCount := 0
     startPos := 1
-        if !InStr(line, ")")
+    if !InStr(line, ")")
     {
         return false
     }
     ; 计算左括号数量
-    while (pos := InStr(line, "(", , startPos)) {
+    while (pos := InStr(line, "(", , startPos))
+    {
         openCount++
         startPos := pos + 1
     }
-    
     ; 重置起始位置，计算右括号数量
     startPos := 1
-    while (pos := InStr(line, ")", , startPos)) {
+    while (pos := InStr(line, ")", , startPos))
+    {
         closeCount++
         startPos := pos + 1
     }
@@ -145,25 +144,25 @@ hasMoreOpenParens(line)
 {
     openCount := 0, closeCount := 0
     startPos := 1
-        if !InStr(line, "(")
+    if !InStr(line, "(")
     {
         return false
     }
     ; 计算左括号数量
-    while (pos := InStr(line, "(", , startPos)) {
+    while (pos := InStr(line, "(", , startPos))
+    {
         openCount++
         startPos := pos + 1
     }
-    
     ; 重置起始位置，计算右括号数量
     startPos := 1
-    while (pos := InStr(line, ")", , startPos)) {
+    while (pos := InStr(line, ")", , startPos))
+    {
         closeCount++
         startPos := pos + 1
     }
     return openCount > closeCount
 }
-
 /**
  * 净化代码行：移除注释、字符串字面量、代码块等干扰内容，保留核心语法结构
  * 用于分析代码行的语法类型（如是否为控制流语句、赋值语句）
@@ -177,43 +176,42 @@ purify(original)
     {
         return ""
     }
-
     ; AHK 内置命令列表， 用于区分「命令」和「函数调用」（命令后无括号，函数后有括号）
     commandList := [
-        "autotrim", "blockinput", "click", "clipwait", "control", "controlclick",
-        "controlfocus", "controlget", "controlgetfocus", "controlgetpos", "controlgettext",
-        "controlmove", "controlsend", "controlsendraw", "controlsettext", "coordmode",
-        "critical", "detecthiddentext", "detecthiddenwindows", "drive", "driveget",
-        "drivespacefree", "edit", "envadd", "envdiv", "envget", "envmult", "envset",
-        "envsub", "envupdate", "exit", "exitapp", "fileappend", "filecopy", "filecopydir",
-        "filecreatedir", "filecreateshortcut", "filedelete", "fileencoding", "filegetattrib",
-        "filegetshortcut", "filegetsize", "filegettime", "filegetversion", "fileinstall",
-        "filemove", "filemovedir", "fileread", "filereadline", "filerecycle",
-        "filerecycleempty", "fileremovedir", "fileselectfile", "fileselectfolder",
-        "filesetattrib", "filesettime", "formattime", "getkeystate", "groupactivate",
-        "groupadd", "groupclose", "groupdeactivate", "gui", "guicontrol", "guicontrolget",
-        "hotkey", "imagesearch", "inidelete", "iniread", "iniwrite", "input", "inputbox",
-        "keyhistory", "keywait", "listhotkeys", "listlines", "listvars", "menu",
-        "mouseclick", "mouseclickdrag", "mousegetpos", "mousemove", "msgbox", "onexit",
-        "outputdebug", "pause", "pixelgetcolor", "pixelsearch", "postmessage", "process",
-        "progress", "random", "regdelete", "regread", "regwrite", "reload", "run",
-        "runas", "runwait", "send", "sendevent", "sendinput", "sendlevel", "sendmessage",
-        "sendmode", "sendplay", "sendraw", "setbatchlines", "setcapslockstate",
-        "setcontroldelay", "setdefaultmousespeed", "setenv", "setformat", "setkeydelay",
-        "setmousedelay", "setnumlockstate", "setregview", "setscrolllockstate",
-        "setstorecapslockmode", "settimer", "settitlematchmode", "setwindelay",
-        "setworkingdir", "shutdown", "sleep", "sort", "soundbeep", "soundget",
-        "soundgetwavevolume", "soundplay", "soundset", "soundsetwavevolume", "splashimage",
-        "splashtextoff", "splashtexton", "splitpath", "statusbargettext", "statusbarwait",
-        "stringcasesense", "stringgetpos", "stringleft", "stringlen", "stringlower",
-        "stringmid", "stringreplace", "stringright", "stringsplit", "stringtrimleft",
-        "stringtrimright", "stringupper", "suspend", "sysget", "thread", "tooltip",
-        "transform", "traytip", "urldownloadtofile", "winactivate", "winactivatebottom",
-        "winclose", "winget", "wingetactivestats", "wingetactivetitle", "wingetclass",
-        "wingetpos", "wingettext", "wingettitle", "winhide", "winkill", "winmaximize",
-        "winmenuselectitem", "winminimize", "winminimizeall", "winminimizeallundo",
-        "winmove", "winrestore", "winset", "winsettitle", "winshow", "winwait",
-        "winwaitactive", "winwaitclose", "winwaitnotactive"
+    "autotrim", "blockinput", "click", "clipwait", "control", "controlclick",
+    "controlfocus", "controlget", "controlgetfocus", "controlgetpos", "controlgettext",
+    "controlmove", "controlsend", "controlsendraw", "controlsettext", "coordmode",
+    "critical", "detecthiddentext", "detecthiddenwindows", "drive", "driveget",
+    "drivespacefree", "edit", "envadd", "envdiv", "envget", "envmult", "envset",
+    "envsub", "envupdate", "exit", "exitapp", "fileappend", "filecopy", "filecopydir",
+    "filecreatedir", "filecreateshortcut", "filedelete", "fileencoding", "filegetattrib",
+    "filegetshortcut", "filegetsize", "filegettime", "filegetversion", "fileinstall",
+    "filemove", "filemovedir", "fileread", "filereadline", "filerecycle",
+    "filerecycleempty", "fileremovedir", "fileselectfile", "fileselectfolder",
+    "filesetattrib", "filesettime", "formattime", "getkeystate", "groupactivate",
+    "groupadd", "groupclose", "groupdeactivate", "gui", "guicontrol", "guicontrolget",
+    "hotkey", "imagesearch", "inidelete", "iniread", "iniwrite", "input", "inputbox",
+    "keyhistory", "keywait", "listhotkeys", "listlines", "listvars", "menu",
+    "mouseclick", "mouseclickdrag", "mousegetpos", "mousemove", "msgbox", "onexit",
+    "outputdebug", "pause", "pixelgetcolor", "pixelsearch", "postmessage", "process",
+    "progress", "random", "regdelete", "regread", "regwrite", "reload", "run",
+    "runas", "runwait", "send", "sendevent", "sendinput", "sendlevel", "sendmessage",
+    "sendmode", "sendplay", "sendraw", "setbatchlines", "setcapslockstate",
+    "setcontroldelay", "setdefaultmousespeed", "setenv", "setformat", "setkeydelay",
+    "setmousedelay", "setnumlockstate", "setregview", "setscrolllockstate",
+    "setstorecapslockmode", "settimer", "settitlematchmode", "setwindelay",
+    "setworkingdir", "shutdown", "sleep", "sort", "soundbeep", "soundget",
+    "soundgetwavevolume", "soundplay", "soundset", "soundsetwavevolume", "splashimage",
+    "splashtextoff", "splashtexton", "splitpath", "statusbargettext", "statusbarwait",
+    "stringcasesense", "stringgetpos", "stringleft", "stringlen", "stringlower",
+    "stringmid", "stringreplace", "stringright", "stringsplit", "stringtrimleft",
+    "stringtrimright", "stringupper", "suspend", "sysget", "thread", "tooltip",
+    "transform", "traytip", "urldownloadtofile", "winactivate", "winactivatebottom",
+    "winclose", "winget", "wingetactivestats", "wingetactivetitle", "wingetclass",
+    "wingetpos", "wingettext", "wingettitle", "winhide", "winkill", "winmaximize",
+    "winmenuselectitem", "winminimize", "winminimizeall", "winminimizeallundo",
+    "winmove", "winrestore", "winset", "winsettitle", "winshow", "winwait",
+    "winwaitactive", "winwaitclose", "winwaitnotactive"
     ]
     ;  临时变量，用于提取命令关键字
     cmdTrim := original
@@ -224,7 +222,7 @@ purify(original)
     {
         ; 这用来确保我们匹配的是命令本身，而不是函数调用（如 "MsgBox()"）
 
-        pattern := "i)(^\s*"  command  "\b(?!\()).*"
+        pattern := "i)(^\s*" command "\b(?!\()).*"
         ; 使用 RegExMatch 进行不区分大小写的匹配
         ; 如果匹配成功，RegExMatch 返回匹配的起始位置（>0）
         if (RegExMatch(original, pattern))
@@ -234,16 +232,14 @@ purify(original)
             break ; 匹配到一个命令后，立即退出循环
         }
     }
-
     ; --- 净化过程 ---
-    pure := RegExReplace(cmdTrim,'".*?"', '""') ;替换字符串字面量为空字符串（如"abc"→""），避免干扰语法分析  
+    pure := RegExReplace(cmdTrim,'".*?"', '""') ;替换字符串字面量为空字符串（如"abc"→""），避免干扰语法分析
     pure := replaceAll(pure,'{[^{}]*}', '') ;移除匹配的代码块（如{...}），避免大括号干扰
     pure := RegExReplace(pure,'\s+', ' ')  ;合并多个空白为单个空格（统一空格格式）
     pure := RegExReplace(pure,commentRegExp, '') ;移除注释（必须最后执行，避免误删字符串中的";"）
     pure :=Trim(pure)
     return pure
 }
-
 /**
  * 判断当前行是否为「单行控制流语句」（下一行需缩进）
  * 单行控制流语句指 if/loop/while 等无大括号的语句，下一行代码需缩进
@@ -255,13 +251,13 @@ nextLineIsOneCommandCode(text)
 {
     ; 需触发下一行缩进的控制流关键字列表
     oneCommandList := [
-        "ifexist", "ifinstring", "ifmsgbox", "ifnotexist", "ifnotinstring",
-        "ifwinactive", "ifwinexist", "ifwinnotactive", "ifwinnotexist",
-        "if", "else", "loop", "for", "while", "catch"
+    "ifexist", "ifinstring", "ifmsgbox", "ifnotexist", "ifnotinstring",
+    "ifwinactive", "ifwinexist", "ifwinnotactive", "ifwinnotexist",
+    "if", "else", "loop", "for", "while", "catch"
     ]
 
     ; 遍历关键字列表，匹配当前行是否为单行控制流语句
-     for oneCommand in oneCommandList
+    for oneCommand in oneCommandList
     {
         ; 匹配规则：
         ;1. 行首可选 "}"（如"} else"场景）
@@ -275,7 +271,6 @@ nextLineIsOneCommandCode(text)
     }
     return false
 }
-
 /**
  * 清理文档中的空行：移除开头空行 + 限制连续空行数量
  * 按用户配置保留指定数量的连续空行，避免空行过多或过少
@@ -285,14 +280,11 @@ nextLineIsOneCommandCode(text)
  */
 removeEmptyLines(docString,allowedNumberOfEmptyLines)
 {
-    if (allowedNumberOfEmptyLines = -1) {
+    if (allowedNumberOfEmptyLines = -1)
+    {
         return docString   ;不限制空行，直接返回原字符串
     }
-
-    ; 正则：匹配「1个换行符 + N个（空白+换行符）」（N ≥ 允许的空行数量）
-    ; \s*?：非贪婪匹配空白（避免匹配换行符外的其他空白）
-     emptyLines := "\n(\s*?\n){" allowedNumberOfEmptyLines ",}"
-     local match := {}
+    emptyLines := "\n(\s*?\n){" allowedNumberOfEmptyLines ",}"
     if (RegExMatch(docString,emptyLines,&match))
     {
         firstName := match[1]
@@ -303,7 +295,7 @@ removeEmptyLines(docString,allowedNumberOfEmptyLines)
     }
     replacement := "`n"
     replacement.=Repeat(firstName,allowedNumberOfEmptyLines)
-    
+
     docString := RegExReplace(docString, emptyLines, replacement)
     docString := RegExReplace(docString, "^\s*\n+")
     return docString
@@ -326,12 +318,12 @@ trimExtraSpaces(line,trimExtraSpaces)
  * @param braceChar 目标大括号（{ 或 }）
  * @returns 未匹配的目标大括号数量
  */
-braceNumber(line, braceChar){
-    lineWithoutBlocks :=  replaceAll(line, "{[^{}]*}", '') ;// 1. 移除所有嵌套代码块（{...}），避免内部大括号干扰
+braceNumber(line, braceChar)
+{
+    lineWithoutBlocks := replaceAll(line, "{[^{}]*}", '') ;// 1. 移除所有嵌套代码块（{...}），避免内部大括号干扰
     braceCount := StrSplit(lineWithoutBlocks, braceChar).Length - 1
     return braceCount
 }
-
 /**
  * 【赋值语句等号对齐主函数】
  * 将多行赋值语句的 `=` 或 `:=` 运算符对齐到同一列，确保代码视觉一致性
@@ -356,13 +348,12 @@ alignTextAssignOperator(text)
     ; 使用 Max 函数找到所有位置中的最大值，这就是我们的「目标对齐位置」
     ; Max 函数可以接受一个数组作为参数，通过 * 解包
     maxPosition := Max(equalSignPositions*)
-    
+
     ; 如果所有行都没有等号，maxPosition 会是 -1，直接返回原数组
     if (maxPosition < 1)
     {
         return text
     }
-
     ; --- 步骤 2: 按最右侧位置对齐所有等号 ---
     ; 创建一个新数组来存储对齐后的行
     alignedTextstr := []
@@ -371,7 +362,7 @@ alignTextAssignOperator(text)
     for line in originalText
     {
         ; 调用辅助函数来对齐当前行
-         alignedLine := alignLineAssignOperator(line, maxPosition)
+        alignedLine := alignLineAssignOperator(line, maxPosition)
         ; 将对齐后的行添加到新数组中
         alignedTextstr.Push(alignedLine)
     }
@@ -379,11 +370,10 @@ alignTextAssignOperator(text)
     ; 返回最终对齐后的字符串数组
     for line in alignedTextstr
     {
-         alignedText .= line "`n"
+        alignedText .= line "`n"
     }
     return alignedText
 }
-
 /**
  * 【赋值语句标准化】
  * 清理赋值语句中的干扰内容，统一等号前后格式，为等号对齐做前置准备
@@ -398,7 +388,7 @@ normalizeLineAssignOperator(original)
     ;仅将「非行首/行尾的连续2个以上空格」替换为1个空格
     original := RegExReplace(original, "\s*(:?=)", ' $1') ;3. 统一等号前空格：无论原是否有空格，均确保等号（含 `:=`）前有1个空格
     original := RegExReplace(original, "(:?=)\s*", '$1 ') ;4. 统一等号后空格：无论原是否有空格，均确保等号（含 `:=`）后有1个空格 更改
-    return original 
+    return original
 }
 /**
  * 【单行赋值等号对齐】
@@ -415,7 +405,6 @@ alignLineAssignOperator(original, targetPosition)
     {
         comment := matchObj[1]  ; 保存提取的注释（如 "; This is a comment"）
     }
-
     ; 步骤2：标准化原始行（清理注释、统一等号前后空格，便于计算
 
     normalizedLine := normalizeLineAssignOperator(original)
@@ -428,11 +417,10 @@ alignLineAssignOperator(original, targetPosition)
     {
         return original
     }
-
     ; --------------------------
     ; 步骤4：补充空格使等号移动到目标位置
     ; --------------------------
-    ; 计算需补充的空格数量：目标位置 - 当前等号索引 + 1（与原 TS 逻辑一致）
+
     spacesCount := targetPosition - currentEqIndex + 1
     ; 生成对应数量的空格（使用 StrRepeat 重复空格字符）
     spacesToAdd := Repeat(" ", spacesCount)
@@ -449,7 +437,6 @@ alignLineAssignOperator(original, targetPosition)
 
     return finalLine
 }
-
 /**
  * 【递归文本替换】
  * 解决原生 `String.replace` 无法处理嵌套/连续匹配的问题（如嵌套 `{}`、`""`）
@@ -469,15 +456,14 @@ replaceAll(text,search,replace)
     }
     return text
 }
-
-
 /**
  * 【控制流嵌套深度管理器】
  * 跟踪 if/loop/while 等控制流语句的缩进层级，处理嵌套代码块的缩进计算
  * 核心数据结构：用数组记录层级，`-1` 作为代码块分隔符（对应 `{}`），数字表示缩进深度
  * 作用：解决嵌套控制流的缩进回溯问题（如多层 if-else 后正确恢复缩进）
  */
-class FlowOfControlNestDepth {
+class FlowOfControlNestDepth
+{
     ; 层级数组：
     ; - 元素为 `-1`：代码块分隔符（标记 `{` 的位置，用于识别代码块边界）
     ; - 元素为数字：控制流语句的缩进深度（如 if 语句所在的层级）
@@ -486,29 +472,36 @@ class FlowOfControlNestDepth {
 
     ; 构造函数：初始化层级数组（支持传入已有数组恢复历史状态，如块注释退出后恢复控制流）
     ; 参数 array：可选初始数组（用于恢复之前的控制流层级，避免状态丢失）
-    __New(array?) {
-        if (IsSet(array) && IsObject(array) && array.Length > 0) {
+    __New(array?)
+    {
+        if (IsSet(array) && IsObject(array) && array.Length > 0)
+        {
             this.depth := array.Clone()  ; 克隆传入的数组，避免外部修改影响内部状态
-        } else {
+        }
+        else
+        {
             this.depth := [-1]  ; 初始默认值
         }
-        
     }
-
     ; 【进入代码块】
     ; 对应代码中出现 `{` 时，添加分隔符标记代码块边界（每个 `{` 对应一个 `-1`）
     ; 参数 openBraceNum：左大括号 `{` 的数量（即进入的代码块数量，支持多层嵌套）
     ; 返回：更新后的层级数组
-    enterBlockOfCode(openBraceNum) {
-        Loop openBraceNum {
+    enterBlockOfCode(openBraceNum)
+    {
+        Loop openBraceNum
+        {
             this.depth.Push(-1)  ; 为每个 `{` 添加分隔符
         }
         return this.depth
     }
-    LastIndexOf(arr, target) {
-        Loop arr.Length {
+    LastIndexOf(arr, target)
+    {
+        Loop arr.Length
+        {
             currentIndex := arr.Length - (A_Index - 1)
-            if (arr[currentIndex] = target) {
+            if (arr[currentIndex] = target)
+            {
                 return currentIndex
             }
         }
@@ -519,37 +512,38 @@ class FlowOfControlNestDepth {
     ; 示例：`[-1, 0, -1, 1, 2]`（两层嵌套）→ 退出1个代码块后 → `[-1, 0]`
     ; 参数 closeBraceNum：右大括号 `}` 的数量（即退出的代码块数量，支持多层退出）
     ; 返回：更新后的层级数组
-    exitBlockOfCode(closeBraceNum) {
+    exitBlockOfCode(closeBraceNum)
+    {
         Loop closeBraceNum
         {
             lastDashIndex := this.LastIndexOf(this.depth, -1)
             this.depth.RemoveAt(lastDashIndex, this.depth.Length- lastDashIndex+1)
-
         }
         this.restoreEmptyDepth()
         return this.depth
     }
-
     ; 【获取当前最内层层级】
     ; 返回层级数组的最后一个元素（当前最内层的分隔符或缩进深度）
     ; 返回值：最后一个元素（数字表示缩进深度，`-1` 表示分隔符）
-    last() {
+    last()
+    {
         return this.depth[this.depth.Length]  ; AHK v2 数组索引从 1 开始
     }
-
     ; 【添加层级记录】
     ; 向层级数组添加一个控制流语句的缩进深度（如记录 if 语句的层级）
     ; 参数 items：要添加的层级值（数字）
     ; 返回：添加后的数组长度（便于后续状态判断）
-    push(items) {
+    push(items)
+    {
         return this.depth.Push(items)
     }
-
     ; 【移除最内层记录】
     ; 从层级数组移除最后一个元素（回溯层级，如 else 对应 if 的层级删除）
     ; 返回：被移除的元素（数字或 `-1`）
-    pop() {
-        if (this.depth.Length = 0) {
+    pop()
+    {
+        if (this.depth.Length = 0)
+        {
             this.restoreEmptyDepth()  ; 确保数组非空
         }
         result := this.depth.Pop()
@@ -557,34 +551,32 @@ class FlowOfControlNestDepth {
         this.restoreEmptyDepth()
         return result
     }
-
     ; 【恢复当前代码块层级】
     ; 删除分隔符后的多余层级，回溯到当前代码块的正确层级（用于控制流嵌套结束后）
     ; 示例：`[-1, 0, -1, 1, 2]` → 恢复后 → `[-1, 0, -1]`，返回被移除的第一个层级 `1`
     ; 返回：恢复前分隔符后的第一个层级值（用于判断缩进回溯目标）
-    restoreDepth() {
+    restoreDepth()
+    {
         ; 找到最后一个分隔符 `-1` 的位置，其下一个元素即为当前块的初始层级
         index := this.LastIndexOf(this.depth, -1)+1
         element := (index <= this.depth.Length) ? this.depth[index] : 0
         ; 删除分隔符后的所有元素（清理当前块的嵌套层级）
-        if (index <= this.depth.Length) {
+        if (index <= this.depth.Length)
+        {
             this.depth.RemoveAt(index, this.depth.Length- index+1)
         }
         return element
     }
-
     ; 【恢复空数组初始状态】
     ; 若层级数组被清空（如异常的多 `}`），重置为初始值 `[-1]`，避免后续操作报错
-    restoreEmptyDepth() {
-        if (this.depth.Length = 0) {
+    restoreEmptyDepth()
+    {
+        if (this.depth.Length = 0)
+        {
             this.depth := [-1]
         }
     }
 }
-
-
-
-
 /**
  * 【单行注释对齐】
  * 使单行注释（以 `;` 开头）与上一行代码的缩进保持一致，避免注释位置混乱
@@ -620,7 +612,7 @@ alignSingleLineComments(stringToFormat, options)
             ; --- 4. 处理空行或纯注释行 ---
             ; 使用上一行非空代码的深度来生成缩进字符
             local indentationChars := buildIndentationChars(prevLineDepth, options)
-            
+
             ; 调用辅助函数重新构建行：新缩进 + 清理后的原始行内容
             lines[i] := buildIndentedString(indentationChars, Trim(line), options.preserveIndent)
         }
@@ -638,7 +630,6 @@ alignSingleLineComments(stringToFormat, options)
                 local braceNum := braceNumber(purifiedLine, "}")
                 depth += braceNum
             }
-
             ; 更新 "上一行代码深度" 变量，供下一行（向前的行）使用
             prevLineDepth := depth
         }
@@ -647,14 +638,11 @@ alignSingleLineComments(stringToFormat, options)
     ; 返回最终对齐后的字符串数组
     for line in lines
     {
-         alignedText .= line "`n"
+        alignedText .= line "`n"
     }
     return alignedText
     ; --- 6. 重新拼接行并返回 ---
 }
-
-
-
 /**
  * 【计算代码行缩进深度】
  * 将代码行的缩进字符（空格/制表符）转换为层级（数字），统一缩进计算标准
@@ -662,7 +650,7 @@ alignSingleLineComments(stringToFormat, options)
  * @param options VS Code 格式化选项（含缩进类型：空格/制表符，缩进大小）
  * @return 缩进深度（数字，如 2 表示 2 级缩进）
  */
- 
+
 calculateDepth(line, options)
 {
     ; 1. 提取行首的所有空白字符（空格或制表符）
@@ -684,7 +672,6 @@ calculateDepth(line, options)
         return StrLen(whitespace)
     }
 }
-
 internalFormat(stringToFormat, options)
 {
     local formattedString := ""  ; 最终格式化后的字符串（逐步拼接）
@@ -695,7 +682,7 @@ internalFormat(stringToFormat, options)
     local depth := 0              ; 当前行的缩进深度（初始为 0，无缩进）
     local prevLineDepth := 0      ; 上一行的缩进深度（用于对齐和回溯）
     local tagDepth := 0           ; 标记深度：控制 Return/Exit/Label/Hotkey 的缩进规则
-                                  ; - 0：特殊语句可取消缩进；>0：按标记深度跳转缩进
+    ; - 0：特殊语句可取消缩进；>0：按标记深度跳转缩进
 
     ; ==============================
     ; 2. 控制流相关状态变量（处理 if/loop/while 等嵌套）
@@ -766,14 +753,13 @@ internalFormat(stringToFormat, options)
     ; Switch 的 Case/Default 匹配（如 case 1:、default:）
     local switchCaseDefault := "^(case\s*.+?:|default:)\s*.*"
     ;是否进入Switch语句
-    local switchflag := false 
+    local switchflag := false
     ;是否Switch的第一个 Case语句
     local switchcaseflag:= false
-    
-    ; 注释提取正则：匹配行中第一个 ; 及其后的所有内容
-     ;local commentRegExp := "(;.*)"
 
-    
+    ; 注释提取正则：匹配行中第一个 ; 及其后的所有内容
+    ;local commentRegExp := "(;.*)"
+
     stringToFormat :=FormatAllmanStyle(stringToFormat)
     ; ==============================
     ; 初始化：按行拆分文档（支持 \n/\r\n/\r 换行符）
@@ -786,7 +772,7 @@ internalFormat(stringToFormat, options)
     {
         lineIndex:=A_Index
         local purifiedLine := StrLower(purify(originalLine))  ; 净化行（去注释/字符串，转小写）
-        local comment := ""  
+        local comment := ""
         ; 提取行尾注释
         if (RegExMatch(originalLine, commentRegExp, &matchObj))
         {
@@ -819,7 +805,7 @@ internalFormat(stringToFormat, options)
         if (emptyLine)
         {
             ; 赋值对齐关闭指令：对齐已收集的赋值块并输出
-            if (alignAssignment &&  ahkAlignAssignmentOff)
+            if (alignAssignment && ahkAlignAssignmentOff)
             {
                 alignAssignment := false
                 ; 调用赋值对齐函数处理已收集的块
@@ -827,7 +813,7 @@ internalFormat(stringToFormat, options)
                 ; 输出对齐后的赋值块（按原行号顺序）
                 for alignedFormattedLine in assignmentBlock
                 {
-                    local lineNum := lineIndex - assignmentBlock.Length + A_Index 
+                    local lineNum := lineIndex - assignmentBlock.Length + A_Index
                     formattedString .= buildIndentedLine(lineNum, lines.length, alignedFormattedLine, depth, options)
                 }
                 assignmentBlock := []  ; 重置赋值块
@@ -838,7 +824,6 @@ internalFormat(stringToFormat, options)
                 formatBlockComment := false
             }
         }
-
         ; --------------------------
         ; 2. 赋值对齐：如果启用了赋值对齐，收集赋值行
         ; --------------------------
@@ -854,13 +839,11 @@ internalFormat(stringToFormat, options)
 
             for alignedFormattedLine in assignmentBlock
             {
-
                 local lineNum := lineIndex - assignmentBlock.Length + A_Index
                 formattedString .= buildIndentedLine(lineNum, lines.length, alignedFormattedLine, depth, options)
             }
             assignmentBlock := []  ; 重置赋值块
         }
-
         ; --------------------------
         ; 3. 块注释开始处理
         ; --------------------------
@@ -872,7 +855,8 @@ internalFormat(stringToFormat, options)
             {
                 blockCommentIndent := matchObj[1]
             }
-            else {
+            else
+            {
                 blockCommentIndent := ""  ; 若此处设为空，后续调用 InStr 需先判断
             }
             ; 若开启块注释格式化，备份当前状态（退出时恢复）
@@ -892,7 +876,6 @@ internalFormat(stringToFormat, options)
                 focDepth := FlowOfControlNestDepth()
             }
         }
-
         ; --------------------------
         ; 4. 块注释处理：块注释内容（保留原格式或格式化）
         ; --------------------------
@@ -901,21 +884,25 @@ internalFormat(stringToFormat, options)
             ; 不格式化块注释：保留用户原始缩进（仅移除基础缩进避免重复）
             if (!formatBlockComment)
             {
-                local blockCommentLine :=  ''
+                local blockCommentLine := ''
                 ; 检查当前行是否以 blockCommentIndent 开头
                 ; 判断 originalLine 是否以 blockCommentIndent 开头
-                if (blockCommentIndent = "") {
+                if (blockCommentIndent = "")
+                {
                     ; 若 blockCommentIndent 为空，直接取整行
                     blockCommentLine := originalLine
-                } else if (InStr(originalLine, blockCommentIndent,, 1) = 1) {
+                }
+                else if (InStr(originalLine, blockCommentIndent,, 1) = 1)
+                {
                     ; 若开头匹配，截取从 blockCommentIndent 长度之后的部分
                     len := StrLen(blockCommentIndent)  ; 获取前缀长度
                     blockCommentLine := SubStr(originalLine, len + 1)  ; 从长度+1位置开始截取（AHK索引从1开始）
-                } else {
+                }
+                else
+                {
                     ; 不匹配时，取整行
                     blockCommentLine := originalLine
                 }
-
                 formattedString .= buildIndentedLine(lineIndex, lines.length, RTrim(blockCommentLine), depth, options)
             }
             ; 检测块注释结束（*/）：恢复状态
@@ -939,7 +926,6 @@ internalFormat(stringToFormat, options)
                 continue
             }
         }
-
         ; --------------------------
         ; 5. 单行注释处理：非格式化指令的纯注释行（对齐到上一行层级）
         ; --------------------------
@@ -949,11 +935,11 @@ internalFormat(stringToFormat, options)
             formattedString .= buildIndentedLine(lineIndex, lines.length, formattedLine, 0, options)
             continue
         }
-
         ; --------------------------
         ; 6. 原始文本续行开始
         ; --------------------------
-        if (RegExMatch(purifiedLine, "^ \( (?!::) (?!.*\bltrim\b) ",)) {
+        if (RegExMatch(purifiedLine, "^ \( (?!::) (?!.*\bltrim\b) ",))
+        {
             continuationSectionTextNotFormat := true
         }
         ; 原始文本续行内容（保留用户格式）
@@ -967,7 +953,6 @@ internalFormat(stringToFormat, options)
             }
             return
         }
-
         ; --------------------------
         ; 7. 续行处理：格式化文本续行结束（(LTrim 开头，恢复缩进）
         ; --------------------------
@@ -982,7 +967,6 @@ internalFormat(stringToFormat, options)
             formattedString .= buildIndentedLine(lineIndex, lines.length, Trim(originalLine), depth, options)
             continue
         }
-
         ; --------------------------
         ; 8. 续行处理：表达式/对象续行（and/or/运算符开头，调整缩进）
         ; --------------------------
@@ -1009,9 +993,8 @@ internalFormat(stringToFormat, options)
                 oneCommandCode := true
                 depth++
             }
-            depth++        
+            depth++
         }
-
         ; --------------------------
         ; 9. 续行处理：恢复延迟的单行控制流缩进
         ; --------------------------
@@ -1021,13 +1004,12 @@ internalFormat(stringToFormat, options)
             oneCommandCode := true
             depth++  ; 恢复单行控制流的缩进
         }
+        ; --------------------------
+        ;
+        ; --------------------------
 
-        ; --------------------------
-        ; 10. 处理右大括号（退出代码块）：退出代码块（右大括号 }，调整缩进和控制流深度）
-        ; --------------------------
         if (closeBraceNum)
         {
-            
             ; 通用控制流深度非分隔符：当前深度设为控制流最后一层深度
             if (focDepth.last() > -1)
             {
@@ -1047,9 +1029,8 @@ internalFormat(stringToFormat, options)
                 switchflag:=false
             }
         }
-
         ; --------------------------
-        ; 11. 代码块处理：进入代码块（左大括号 {，调整控制流状态）
+        ;  代码块处理：进入代码块（左大括号 {，调整控制流状态）
         ; --------------------------
         if (openBraceNum)
         {
@@ -1073,22 +1054,21 @@ internalFormat(stringToFormat, options)
             }
         }
         ; --------------------------
-        ; 12. 控制流处理：退出嵌套（非续行、非单行控制流，回溯缩进）
+        ; 控制流处理：退出嵌套（非续行、非单行控制流，回溯缩进）
         ; --------------------------
         if ((ifDepth.last() > -1 || focDepth.last() > -1) && !continuationSectionExpression && !oneCommandCode && (!blockComment || formatBlockComment))
         {
             ; else 语句：回溯到 if 上一层深度
-            if (RegExMatch(purifiedLine, "^}? ?else\b(?!:)")) 
+            if (RegExMatch(purifiedLine, "^}? ?else\b(?!:)"))
             {
                 depth := ifDepth.pop()
             }
             else if (!RegExMatch(purifiedLine, "^{") && !RegExMatch(purifiedLine, "^}"))
             {
-
                 local restoreIfDepth := ifDepth.restoreDepth()
                 local restoreFocDepth := focDepth.restoreDepth()
                 ; 处理深度值存在的情况，取最小值
-								;原语句if (restoreIfDepth !== undefined &&restoreFocDepth !== undefined)
+                ;原语句if (restoreIfDepth !== undefined &&restoreFocDepth !== undefined)
                 if (restoreIfDepth!=0 && restoreFocDepth!=0)
                 {
                     ;depth := Min(Number(restoreIfDepth), Number(restoreFocDepth))
@@ -1100,9 +1080,8 @@ internalFormat(stringToFormat, options)
                 }
             }
         }
-
         ; --------------------------
-        ; 13. 特殊指令处理：#If 指令（调整缩进和标记深度）
+        ;  特殊指令处理：#If 指令（调整缩进和标记深度）
         ; --------------------------
         if (RegExMatch(purifiedLine, "^" . sharpDirective . "\b"))
         {
@@ -1116,20 +1095,18 @@ internalFormat(stringToFormat, options)
                 depth--  ; 标记深度为 0：深度减 1
             }
         }
-
         ; --------------------------
-        ; 14. 特殊语句处理：Return/Exit/ExitApp（强制回溯到标签层级）
+        ;  特殊语句处理：Return/Exit/ExitApp（强制回溯到标签层级）
         ; --------------------------
         if (RegExMatch(purifiedLine, "^(return|exit|exitapp)\b") && tagDepth = depth)
         {
             tagDepth := 0  ; 重置标记深度
             depth--        ; 缩进减 1（回溯到标签前层级）
         }
-
         ; --------------------------
-        ; 15. 特殊语句处理：Switch-Case/Default 或 Label/Hotkey（调整缩进）
+        ;  特殊语句处理：Switch-Case/Default 或 Label/Hotkey（调整缩进）
         ; --------------------------
-       if (RegExMatch(purifiedLine, "\bswitch\b"))
+        if (RegExMatch(purifiedLine, "\bswitch\b"))
         {
             switchflag:=true
             switchcaseflag:=true
@@ -1144,7 +1121,6 @@ internalFormat(stringToFormat, options)
             {
                 depth--  ; Case/Default：缩进减 1（与 Switch 同层级）
             }
-            
         }
         else if (RegExMatch(purifiedLine, label) || RegExMatch(purifiedLine, hotkey) || RegExMatch(purifiedLine, hotkeySingleLine))
         {
@@ -1154,10 +1130,8 @@ internalFormat(stringToFormat, options)
                 depth--
             }
         }
-; Print(depth)
-; Print(ifDepth)
         ; --------------------------
-        ; 16. 边界处理：确保深度非负（避免异常缩进）
+        ; 边界处理：确保深度非负（避免异常缩进）
         ; --------------------------
         if (depth < 0)
         {
@@ -1167,11 +1141,10 @@ internalFormat(stringToFormat, options)
         {
             preBlockCommentDepth := 0
         }
-
         prevLineDepth := depth  ; 更新上一行深度，供下一行参考
 
         ; --------------------------
-        ; 17. 输出当前行：添加缩进并拼接至结果字符串
+        ;  输出当前行：添加缩进并拼接至结果字符串
         ; --------------------------
         formattedString .= buildIndentedLine(lineIndex, lines.length, formattedLine, depth, options)
 
@@ -1195,7 +1168,6 @@ internalFormat(stringToFormat, options)
                 formatBlockComment := true
             }
         }
-
         ; --------------------------
         ; 2. 单行控制流处理：重置状态并调整下一行缩进
         ; --------------------------
@@ -1213,7 +1185,6 @@ internalFormat(stringToFormat, options)
         {
             prevLineIsOneCommandCode := false  ; 重置上一行单行控制流标记
         }
-
         ; --------------------------
         ; 3. 控制流处理：无大括号时记录层级（单行控制流的下一行需缩进）
         ; --------------------------
@@ -1221,7 +1192,6 @@ internalFormat(stringToFormat, options)
         {
             focDepth.push(depth)  ; 记录当前深度到通用控制流管理器
         }
-
         ; --------------------------
         ; 4. 控制流处理：记录 if/else if 层级
         ; --------------------------
@@ -1229,7 +1199,6 @@ internalFormat(stringToFormat, options)
         {
             ifDepth.push(depth)  ; 记录当前深度到 if 控制流管理器
         }
-
         ; --------------------------
         ; 5. 代码块处理：进入代码块（左大括号 {，调整缩进和控制流状态）
         ; --------------------------
@@ -1254,7 +1223,6 @@ internalFormat(stringToFormat, options)
         {
             openBraceIndent := false  ; 无左大括号：重置左大括号缩进标记
         }
-
         ; --------------------------
         ; 6. 特殊指令处理：#If 指令后缩进（按配置开启）
         ; --------------------------
@@ -1284,7 +1252,6 @@ internalFormat(stringToFormat, options)
         {
             tagDepth := 0  ; 单行热键后：重置标记深度（避免后续语句异常缩进）
         }
-
         ; --------------------------
         ; 8. 续行处理：表达式续行结束（调整缩进）
         ; --------------------------
@@ -1304,27 +1271,25 @@ internalFormat(stringToFormat, options)
             }
             depth--  ; 表达式续行结束：深度减 1（回溯到续行前层级）
         }
-
         ; --------------------------
         ; 9. 续行处理：格式化文本续行开始（(LTrim 开头，调整缩进）
         ; --------------------------
-        if (RegExMatch(purifiedLine, "^\((?!::)(?=.*\bltrim\b)")) 
+        if (RegExMatch(purifiedLine, "^\((?!::)(?=.*\bltrim\b)"))
         {
             continuationSectionTextFormat := true
             depth++
         }
-
         ;单行控制流缩进
-        if (detectOneCommandCode && nextLineIsOneCommandCode(purifiedLine)) {
+        if (detectOneCommandCode && nextLineIsOneCommandCode(purifiedLine))
+        {
             oneCommandCode := true
             depth++
         }
         ; 调试输出（文件末尾检查控制流状态）
-        if (lineIndex = lines.length - 1) {
-          
+        if (lineIndex = lines.length - 1)
+        {
         }
     }
-
     ;对齐单行注释
     formattedString := alignSingleLineComments(formattedString, options)
 
@@ -1333,60 +1298,107 @@ internalFormat(stringToFormat, options)
 
     return formattedString
 }
-
-FormatAllmanStyle(strInput) 
+FormatAllmanStyle(strInput)
 {
     output := ""
-    inQuotes := false  ; 标记是否在双引号对中
+    inDoubleQuotes := false  ; 双引号字符串标记
+    inSingleQuotes := false  ; 单引号字符串标记
+    inLineComment := false   ; 单行注释标记（; 开头）
+    inBlockComment := false  ; 块注释标记（/** ... */）
     strLength := StrLen(strInput)
-    
-    Loop strLength {
-        currentChar := SubStr(strInput, A_Index, 1)
-        
-        ; 处理双引号，切换状态
-        if (currentChar = '"') {
-            inQuotes := !inQuotes
-            output .= currentChar
-            continue
-        }
-        
-        ; 如果在双引号中，直接添加字符
-        if (inQuotes) {
-            output .= currentChar
-            continue
-        }
-        
-        if (currentChar = "{" || currentChar = "}") 
-				{
 
-						output .= "`n" currentChar "`n"
-        } 
-				else 
-				{
+    Loop strLength
+    {
+        currentChar := SubStr(strInput, A_Index, 1)
+        nextChar := (A_Index < strLength) ? SubStr(strInput, A_Index + 1, 1) : ""
+
+        ; 1. 处理块注释状态（/** 开头，*/ 结尾）
+        if (!inBlockComment && !inDoubleQuotes && !inSingleQuotes && !inLineComment)
+        {
+            ; 检测块注释开始：当前是/且下一个是*且下下个是*
+            if (currentChar = "/" && nextChar = "*" && SubStr(strInput, A_Index + 2, 1) = "*")
+            {
+                inBlockComment := true
+                output .= currentChar  ; 添加第一个/
+                continue  ; 后续字符在循环中处理
+            }
+        }
+        ; 检测块注释结束：当前是*且下一个是/
+        if (inBlockComment && currentChar = "*" && nextChar = "/")
+        {
+            inBlockComment := false
+            output .= currentChar  ; 添加*
+            continue  ; 下一个/会在循环中处理
+        }
+        ; 2. 处理单行注释状态（; 开头，换行结束）
+        if (!inLineComment && !inDoubleQuotes && !inSingleQuotes && !inBlockComment)
+        {
+            if (currentChar = ";")
+            {
+                inLineComment := true
+                output .= currentChar
+                continue
+            }
+        }
+        ; 单行注释换行后结束
+        if (inLineComment && (currentChar = "`n" || currentChar = "`r"))
+        {
+            inLineComment := false
+        }
+        ; 3. 处理引号状态（优先于注释）
+        if (currentChar = '"' && !inSingleQuotes && !inBlockComment && !inLineComment)
+        {
+            inDoubleQuotes := !inDoubleQuotes
             output .= currentChar
+            continue
+        }
+        if (currentChar = "'" && !inDoubleQuotes && !inBlockComment && !inLineComment)
+        {
+            inSingleQuotes := !inSingleQuotes
+            output .= currentChar
+            continue
+        }
+        ; 4. 内容处理逻辑
+        if (inDoubleQuotes || inSingleQuotes || inLineComment || inBlockComment)
+        {
+            ; 字符串或注释中的内容：直接添加，不处理大括号
+            output .= currentChar
+        }
+        else
+        {
+            ; 代码中的大括号：添加换行
+            if (currentChar = "{" || currentChar = "}")
+            {
+                output .= "`n" currentChar "`n"
+            }
+            else
+            {
+                output .= currentChar
+            }
         }
     }
-    output:=CleanBracesEmptyLines(output)
+    output := CleanBracesEmptyLines(output)
     return output
 }
 ; 辅助函数：移除大括号前后的所有空行
-CleanBracesEmptyLines(docString) {
+CleanBracesEmptyLines(docString)
+{
     ; 统一换行符为\n
     docString := StrReplace(docString, "`r`n", "`n")
-    
+
     ; 处理左大括号 { 前的空行：匹配{前的所有空行，替换为单个换行
     docString := RegExReplace(docString, "(?:\s*\n)+(?={)", "`n")
     ; 处理左大括号 { 后的空行：匹配{后的所有空行，替换为{+单个换行
     docString := RegExReplace(docString, "{(?:\n\s*)+", "{`n")
-    
+
     ; 处理右大括号 } 前的空行：匹配}前的所有空行，替换为单个换行
     docString := RegExReplace(docString, "(?:\s*\n)+(?=})", "`n")
     ; 处理右大括号 } 后的空行：匹配}后的所有空行，替换为}+单个换行
     docString := RegExReplace(docString, "}(?:\n\s*)+", "}`n")
-    
+
     ; 特殊处理：移除行首大括号前的多余换行
     docString := RegExReplace(docString, "^`n([{}])", "$1")
-    
+
     ; 还原为Windows换行符
     return StrReplace(docString, "`n", "`r`n")
 }
@@ -1401,18 +1413,18 @@ format()
     if(codetext="")
     {
         codetext:=oSciTE.Document
-				fmtext:=internalFormat(codetext,options2)
-				; 清空编辑器文本
-				ControlSetText("", "Scintilla1", "ahk_id " SciTEHwnd)
-				oSciTE.InsertText(fmtext)
+        fmtext:=internalFormat(codetext,options2)
+        ; 清空编辑器文本
+        codeLength := StrLen(codetext)
+        ControlSetText("", "Scintilla1", "ahk_id " SciTEHwnd)
+        oSciTE.InsertText(fmtext)
     }
-		else
-		{
-			fmtext:=internalFormat(codetext,options2)
-				; 清空编辑器文本
-			oSciTE.ReplaceSel(fmtext)
-		}
-		
+    else
+    {
+        fmtext:=internalFormat(codetext,options2)
+        ; 清空编辑器文本
+        oSciTE.ReplaceSel(fmtext)
+    }
 }
 format()
 
