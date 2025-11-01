@@ -1,10 +1,30 @@
-﻿#Requires AutoHotkey v2
-#include OCR.ahk
+﻿#Requires AutoHotkey v2.0
 
-result := OCR.FromDesktop()
-MsgBox "All text from desktop: `n" result.Text
-
-MsgBox "Press OK to highlight all found lines for 3 seconds."
-for line in result.Lines
-    result.Highlight(line, -3000)
-ExitApp
+oSciTE:= ComObjActive("SciTE4AHK.Application")
+; SciTE的 Hwnd
+SciTEHwnd := oSciTE.SciTEHandle
+; 编辑器的 Hwnd
+EditHwnd := ControlGetHwnd("Scintilla1", "ahk_id" SciTEHwnd)
+format()
+{
+    codetext:=oSciTE.Selection
+    if(codetext="")
+    {
+        codetext:=oSciTE.Document
+        fmtext:=internalFormat(codetext,options2)
+        ; 清空编辑器文本
+        codeLength := StrLen(codetext)
+        ControlSetText("", "Scintilla1", "ahk_id " SciTEHwnd)
+        oSciTE.InsertText(fmtext)
+    }
+    else
+    {
+        fmtext:=internalFormat(codetext,options2)
+        ; 清空编辑器文本
+        oSciTE.ReplaceSel(fmtext)
+    }
+}
+internalFormat(df,op)
+{
+    return 1
+}
