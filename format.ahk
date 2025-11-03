@@ -284,6 +284,8 @@ removeEmptyLines(docString,allowedNumberOfEmptyLines)
     {
         return docString   ;不限制空行，直接返回原字符串
     }
+    ; 正则：匹配「1个换行符 + N个（空白+换行符）」（N ≥ 允许的空行数量）
+    ; \s*?：非贪婪匹配空白（避免匹配换行符外的其他空白）
     emptyLines := "\n(\s*?\n){" allowedNumberOfEmptyLines ",}"
     if (RegExMatch(docString,emptyLines,&match))
     {
@@ -322,6 +324,8 @@ braceNumber(line, braceChar)
 {
     lineWithoutBlocks := replaceAll(line, "{[^{}]*}", '') ;// 1. 移除所有嵌套代码块（{...}），避免内部大括号干扰
     braceCount := StrSplit(lineWithoutBlocks, braceChar).Length - 1
+    if(braceCount<0)
+        braceCount :=0
     return braceCount
 }
 /**
@@ -420,7 +424,7 @@ alignLineAssignOperator(original, targetPosition)
     ; --------------------------
     ; 步骤4：补充空格使等号移动到目标位置
     ; --------------------------
-
+    ; 计算需补充的空格数量：目标位置 - 当前等号索引 + 1（与原 TS 逻辑一致）
     spacesCount := targetPosition - currentEqIndex + 1
     ; 生成对应数量的空格（使用 StrRepeat 重复空格字符）
     spacesToAdd := Repeat(" ", spacesCount)
@@ -1005,9 +1009,8 @@ internalFormat(stringToFormat, options)
             depth++  ; 恢复单行控制流的缩进
         }
         ; --------------------------
-        ;
+        ; 10. 处理右大括号（退出代码块）：退出代码块（右大括号 }，调整缩进和控制流深度）
         ; --------------------------
-
         if (closeBraceNum)
         {
             ; 通用控制流深度非分隔符：当前深度设为控制流最后一层深度
@@ -1030,7 +1033,7 @@ internalFormat(stringToFormat, options)
             }
         }
         ; --------------------------
-        ;  代码块处理：进入代码块（左大括号 {，调整控制流状态）
+        ; 11. 代码块处理：进入代码块（左大括号 {，调整控制流状态）
         ; --------------------------
         if (openBraceNum)
         {
@@ -1054,7 +1057,7 @@ internalFormat(stringToFormat, options)
             }
         }
         ; --------------------------
-        ; 控制流处理：退出嵌套（非续行、非单行控制流，回溯缩进）
+        ; 12. 控制流处理：退出嵌套（非续行、非单行控制流，回溯缩进）
         ; --------------------------
         if ((ifDepth.last() > -1 || focDepth.last() > -1) && !continuationSectionExpression && !oneCommandCode && (!blockComment || formatBlockComment))
         {
@@ -1081,7 +1084,7 @@ internalFormat(stringToFormat, options)
             }
         }
         ; --------------------------
-        ;  特殊指令处理：#If 指令（调整缩进和标记深度）
+        ; 13. 特殊指令处理：#If 指令（调整缩进和标记深度）
         ; --------------------------
         if (RegExMatch(purifiedLine, "^" . sharpDirective . "\b"))
         {
@@ -1096,7 +1099,7 @@ internalFormat(stringToFormat, options)
             }
         }
         ; --------------------------
-        ;  特殊语句处理：Return/Exit/ExitApp（强制回溯到标签层级）
+        ; 14. 特殊语句处理：Return/Exit/ExitApp（强制回溯到标签层级）
         ; --------------------------
         if (RegExMatch(purifiedLine, "^(return|exit|exitapp)\b") && tagDepth = depth)
         {
@@ -1104,7 +1107,7 @@ internalFormat(stringToFormat, options)
             depth--        ; 缩进减 1（回溯到标签前层级）
         }
         ; --------------------------
-        ;  特殊语句处理：Switch-Case/Default 或 Label/Hotkey（调整缩进）
+        ; 15. 特殊语句处理：Switch-Case/Default 或 Label/Hotkey（调整缩进）
         ; --------------------------
         if (RegExMatch(purifiedLine, "\bswitch\b"))
         {
@@ -1131,7 +1134,7 @@ internalFormat(stringToFormat, options)
             }
         }
         ; --------------------------
-        ; 边界处理：确保深度非负（避免异常缩进）
+        ; 16. 边界处理：确保深度非负（避免异常缩进）
         ; --------------------------
         if (depth < 0)
         {
@@ -1144,7 +1147,7 @@ internalFormat(stringToFormat, options)
         prevLineDepth := depth  ; 更新上一行深度，供下一行参考
 
         ; --------------------------
-        ;  输出当前行：添加缩进并拼接至结果字符串
+        ; 17. 输出当前行：添加缩进并拼接至结果字符串
         ; --------------------------
         formattedString .= buildIndentedLine(lineIndex, lines.length, formattedLine, depth, options)
 
@@ -1414,10 +1417,11 @@ format()
     {
         codetext:=oSciTE.Document
         fmtext:=internalFormat(codetext,options2)
+        postion:=oSciTE.GetCurPos
         ; 清空编辑器文本
-        codeLength := StrLen(codetext)
         ControlSetText("", "Scintilla1", "ahk_id " SciTEHwnd)
         oSciTE.InsertText(fmtext)
+        oSciTE.SetCurPos(postion)
     }
     else
     {
